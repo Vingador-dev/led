@@ -1,3 +1,4 @@
+const VERSION = 3;
 const $ = s => document.querySelector(s);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const hex = u => [...u].map(b => b.toString(16).padStart(2, '0')).join(' ');
@@ -659,7 +660,15 @@ function buildUi() {
       show();
       store.set('cal', CAL);
       S.bri = end === 'lo' ? 1 : 100;
-      push('bright');
+      if (S.mode === 'fx' || !S.on) {
+        S.mode = 'color';
+        S.on = true;
+        group(s => s.cfg.resync(s));
+        render();
+        save();
+      } else {
+        push('bright');
+      }
     };
   });
   $('#calReset').onclick = () => {
@@ -726,4 +735,15 @@ window.addEventListener('unhandledrejection', e => log('Erreur : ' + ((e.reason 
 buildUi();
 checkSupport();
 restore();
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+$('#ver').textContent = 'version ' + VERSION;
+if ('serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !reloaded) {
+      reloaded = true;
+      location.reload();
+    }
+  });
+  navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(r => r.update()).catch(() => {});
+}
