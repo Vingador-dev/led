@@ -158,6 +158,13 @@ const EFFECTS = ['Arc-en-ciel en boucle', 'Fondu rouge', 'Fondu vert', 'Fondu bl
 const PRESETS = [[0, 0], [30, 55], [0, 100], [22, 100], [50, 100], [120, 100], [180, 100], [230, 100], [275, 100], [320, 100]];
 
 const S = Object.assign({ on: true, h: 30, s: 55, bri: 80, mode: 'color', fx: 0, speed: 6, segs: null }, store.get('state', {}));
+const CAL = Object.assign({ govee: { lo: 1, hi: 100 }, bj: { lo: 1, hi: 100 } }, store.get('cal', {}));
+
+function level(id) {
+  const c = CAL[id];
+  const t = (S.bri - 1) / 99;
+  return c.lo + (c.hi - c.lo) * (id === 'bj' ? Math.pow(t, 2.2) : t);
+}
 
 function hsv2rgb(h, s, v) {
   const f = n => { const k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
@@ -501,7 +508,7 @@ const goveeCfg = {
   resync(s) {
     if (!S.on) return this.off(s);
     s.send('power', [GV.power(true)]);
-    s.send('bright', [GV.bright(S.bri)]);
+    s.send('bright', [GV.bright(level('govee'))]);
     this.paint(s);
   },
   paint(s) {
@@ -519,7 +526,7 @@ const goveeCfg = {
   },
   color(s) { this.paint(s); },
   segs(s) { this.paint(s); },
-  bright(s) { s.send('bright', [GV.bright(S.bri)]); },
+  bright(s) { s.send('bright', [GV.bright(level('govee'))]); },
   fx() {},
   off(s) { s.send('power', [GV.power(false)]); }
 };
@@ -555,7 +562,8 @@ const bjCfg = {
     else this.color(s);
   },
   color(s) {
-    const [r, g, b] = rgbNow().map(x => Math.round(x * S.bri / 100));
+    const f = level('bj') / 100;
+    const [r, g, b] = rgbNow().map(x => (x ? Math.max(1, Math.round(x * f)) : 0));
     s.send('mode', [BJ.color(r, g, b)]);
   },
   bright(s) { if (S.mode !== 'fx') this.color(s); },
@@ -640,6 +648,26 @@ function buildUi() {
   $('#hue').oninput = e => { S.h = +e.target.value; color(); };
   $('#sat').oninput = e => { S.s = +e.target.value; color(); };
   $('#bri').oninput = e => { S.bri = +e.target.value; push('bright'); };
+  document.querySelectorAll('[data-cal]').forEach(el => {
+    const [id, end] = el.dataset.cal.split('.');
+    const out = el.previousElementSibling.querySelector('span:last-child');
+    const show = () => { el.value = CAL[id][end]; out.textContent = CAL[id][end] + ' %'; };
+    show();
+    el.show = show;
+    el.oninput = () => {
+      CAL[id][end] = +el.value;
+      show();
+      store.set('cal', CAL);
+      S.bri = end === 'lo' ? 1 : 100;
+      push('bright');
+    };
+  });
+  $('#calReset').onclick = () => {
+    Object.assign(CAL, { govee: { lo: 1, hi: 100 }, bj: { lo: 1, hi: 100 } });
+    store.set('cal', CAL);
+    document.querySelectorAll('[data-cal]').forEach(el => el.show());
+    push('bright');
+  };
   $('#fx').onchange = e => { S.fx = +e.target.value; S.mode = 'fx'; push('fx'); };
   $('#fxGo').onclick = () => { S.fx = +$('#fx').value; S.mode = 'fx'; push('fx'); };
   $('#fxSpeed').oninput = e => { S.speed = +e.target.value; if (S.mode === 'fx') push('fx'); else save(); };

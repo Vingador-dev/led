@@ -86,6 +86,22 @@ details li{margin-bottom:6px}
 </div>
 
 <div class="card">
+  <details>
+    <summary>Équilibrer la luminosité des deux bandes</summary>
+    <div class="small" style="margin:8px 0">Mets du blanc. Bouger un réglage "mini" passe les deux bandes à 1 %, un réglage "maxi" les passe à 100 %. Baisse la bande la plus forte jusqu'à ce que les deux se ressemblent.</div>
+    <div class="slab"><span>Govee mini</span><span></span></div>
+    <input type="range" min="1" max="40" data-cal="govee.lo">
+    <div class="slab"><span>Govee maxi</span><span></span></div>
+    <input type="range" min="10" max="100" data-cal="govee.hi">
+    <div class="slab"><span>AliExpress mini</span><span></span></div>
+    <input type="range" min="1" max="40" data-cal="bj.lo">
+    <div class="slab"><span>AliExpress maxi</span><span></span></div>
+    <input type="range" min="10" max="100" data-cal="bj.hi">
+    <div class="row" style="margin-top:8px"><button id="calReset">Remettre par défaut</button></div>
+  </details>
+</div>
+
+<div class="card">
   <h2>Effets bande AliExpress</h2>
   <div class="row"><select id="fx"></select><button id="fxGo">Lancer</button></div>
   <div class="slab"><span>Vitesse</span><span>lent / rapide</span></div>
