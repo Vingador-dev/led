@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#111318">
+<title>Mes LEDs</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--bg:#111318;--card:#1b1e25;--line:#2a2e38;--txt:#e9ebf0;--dim:#9aa0ad;--ok:#3ecf8e;--warn:#f5b041;--err:#ef5350;--acc:#5b8cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:12px 12px 40px;max-width:560px;margin:auto}
+h1{font-size:22px;margin:6px 0 12px}
+h2{font-size:15px;margin:0 0 10px;color:var(--dim);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.strip{display:flex;flex-direction:column;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
+.strip:last-child{border-bottom:0;padding-bottom:0}
+.strip:first-of-type{padding-top:0}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.name{font-weight:600;flex:1}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--dim);flex:none}
+.dot.ok{background:var(--ok)}.dot.busy{background:var(--warn);animation:p 1s infinite}.dot.err{background:var(--err)}
+@keyframes p{50%{opacity:.3}}
+.status{font-size:13px;color:var(--dim)}
+button{font:inherit;color:var(--txt);background:#262a33;border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+button:active{transform:scale(.97)}
+button.main{background:var(--acc);border-color:var(--acc);color:#fff;font-weight:600}
+button.big{flex:1;padding:16px;font-size:17px;font-weight:600}
+button.on{background:#2e7d5b;border-color:#2e7d5b}
+button.off{background:#3a2a2c;border-color:#5a3a3d}
+button:disabled{opacity:.4}
+label.chk{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--dim)}
+input[type=range]{width:100%;accent-color:var(--acc);height:32px}
+.slab{display:flex;justify-content:space-between;font-size:14px;color:var(--dim);margin-top:6px}
+#hue{background:linear-gradient(90deg,red,#ff0,lime,cyan,blue,#f0f,red);border-radius:8px;-webkit-appearance:none;appearance:none;height:28px}
+#hue::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid #000}
+.swatches{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:10px}
+.sw{aspect-ratio:1;border-radius:10px;border:2px solid var(--line);padding:0}
+#preview{width:44px;height:44px;border-radius:10px;border:2px solid var(--line);flex:none}
+select{font:inherit;background:#262a33;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px;flex:1}
+.segs{display:grid;grid-template-columns:repeat(15,1fr);gap:3px;margin:8px 0}
+.seg{height:38px;border-radius:5px;border:2px solid transparent;padding:0;background:#333}
+.seg.sel{border-color:#fff}
+details summary{cursor:pointer;color:var(--dim);font-size:15px}
+details ul{padding-left:18px;margin:8px 0;color:var(--dim);font-size:14px}
+details li{margin-bottom:6px}
+#log{font:12px/1.4 ui-monospace,monospace;color:var(--dim);white-space:pre-wrap;max-height:220px;overflow:auto;background:#0c0d11;border-radius:8px;padding:8px;margin-top:8px}
+#banner{display:none;background:#3a2a2c;border:1px solid var(--err);border-radius:12px;padding:12px;margin-bottom:12px;font-size:14px}
+.small{font-size:13px;color:var(--dim)}
+</style>
+</head>
+<body>
+<h1>Mes LEDs</h1>
+<div id="banner"></div>
+
+<div class="card">
+  <h2>Bandes</h2>
+  <div class="strip" id="s-govee">
+    <div class="row"><span class="dot"></span><span class="name">Govee H618A</span>
+      <label class="chk"><input type="checkbox" class="grp" checked> groupe</label></div>
+    <div class="status">Pas encore connectée</div>
+    <div class="row"><button class="main pair">Connecter</button><button class="drop">Oublier</button></div>
+  </div>
+  <div class="strip" id="s-bj">
+    <div class="row"><span class="dot"></span><span class="name">Bande AliExpress</span>
+      <label class="chk"><input type="checkbox" class="grp" checked> groupe</label></div>
+    <div class="status">Pas encore connectée</div>
+    <div class="row"><button class="main pair">Connecter</button><button class="drop">Oublier</button></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="row"><button class="big on" id="allOn">Allumer</button><button class="big off" id="allOff">Éteindre</button></div>
+</div>
+
+<div class="card">
+  <h2>Couleur</h2>
+  <div class="row"><div id="preview"></div><div style="flex:1"><input type="range" id="hue" min="0" max="360" value="30"></div></div>
+  <div class="slab"><span>Blanc</span><span>Couleur vive</span></div>
+  <input type="range" id="sat" min="0" max="100" value="100">
+  <div class="swatches" id="swatches"></div>
+  <div class="slab" style="margin-top:14px"><span>Luminosité</span><span id="briVal">80 %</span></div>
+  <input type="range" id="bri" min="1" max="100" value="80">
+</div>
+
+<div class="card">
+  <h2>Effets bande AliExpress</h2>
+  <div class="row"><select id="fx"></select><button id="fxGo">Lancer</button></div>
+  <div class="slab"><span>Vitesse</span><span>lent / rapide</span></div>
+  <input type="range" id="fxSpeed" min="1" max="10" value="6">
+</div>
+
+<div class="card">
+  <h2>Sections Govee</h2>
+  <div class="small">Touche des sections : la couleur que tu choisis ensuite va seulement sur elles. Touche "Toute la bande" pour revenir à une seule couleur partout.</div>
+  <div class="segs" id="segs"></div>
+  <div class="row"><button id="segNone">Toute la bande</button></div>
+</div>
+
+<div class="card">
+  <details>
+    <summary>Ça ne marche pas ?</summary>
+    <ul>
+      <li>Ferme complètement les apps Govee Home et MohuanLED (balaye-les des apps récentes). Une bande n'accepte qu'un seul téléphone/app à la fois.</li>
+      <li>Active le Bluetooth et la Localisation du téléphone. Chrome doit avoir le droit "Appareils à proximité".</li>
+      <li>Utilise Chrome. Samsung Internet et Firefox ne gèrent pas bien le Bluetooth web.</li>
+      <li>Si la bande n'apparaît pas dans la liste, essaie la recherche large ci-dessous.</li>
+      <li>Si une bande reste bloquée, débranche-la 10 secondes puis rebranche-la.</li>
+    </ul>
+    <div class="row"><button id="wideGovee">Recherche large Govee</button><button id="wideBj">Recherche large AliExpress</button></div>
+    <div class="row" style="margin-top:8px"><button id="copyLog">Copier le journal</button></div>
+    <div id="log"></div>
+  </details>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
